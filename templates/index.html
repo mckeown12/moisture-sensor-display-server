@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moisture Detector</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js" integrity="sha512-d9xgZrVZpmmQlfonhQUvTR7lMPtO7NkZMkA0ABN3PHCbKA5nqylQ/yWlFAyY6hYgdF1Qh6nYiuADWwKB4C2WSw==" crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <style>
+	html, body {
+		padding: 0px;
+		margin: 0px;
+		width: 100%;
+		height: 100%;
+	}
+
+	body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+	}
+
+        #container {
+            margin:auto;
+            padding:2em;
+            box-shadow: 0 0 2em -0.5em darkslategrey;
+            font-family:roboto;
+            max-width: 900px;
+            min-width: 65%;
+        }
+
+	#myChart{
+	    margin:auto;
+	}
+
+	#wetnessInfo{
+	    text-align: center;
+	    box-shadow: 0 3px 5px -5px black;
+	    padding-bottom: 1em;
+	}
+
+    </style>
+
+    <div id="container">
+        <h1 id="wetnessInfo"></h1>
+        <canvas id="myChart"></canvas>
+    </div>
+
+
+
+    <script>
+        var ctx = document.getElementById('myChart').getContext('2d');
+        var myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Wetness',
+                    data: [],
+		    backgroundColor: "rgba(100,100,200,0.8)",
+		    borderColor: "rgba(100,100,200,0.8)"
+                }]
+            },
+            options: {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true
+                        }
+                    }]
+                }
+            }
+        });
+
+	function pushToQueue(x, q, maxLength){
+		if(q.length > maxLength)
+			q.shift();
+		q.push(x);
+	}
+
+        function updateData(wetness) {
+            let myH1 = document.getElementById("wetnessInfo")
+            wetness = parseInt(parseFloat(wetness)*100)
+            myH1.innerText = `The sensor is detecting ${wetness}% wetness`;
+
+            let now = new Date().toLocaleString()
+            pushToQueue(now, myChart.data.labels, 100);
+            myChart.data.datasets.forEach(function(dataset){
+                pushToQueue(wetness, dataset.data, 100);
+            })
+            myChart.update();
+        }
+
+
+        setInterval(() => {
+            fetch("/api").then(x => x.text()).then(x => updateData(x))
+        }, 1000);
+    </script>
+</body>
+
+</html>
